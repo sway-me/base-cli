@@ -1,8 +1,6 @@
-# Sway Home: The ecosytem you've always wanted
+# sway home
 
-# Installation
-run `sh -c "${https://sway-me.xyz/install.sh}"`
-
+![](https://f000.backblazeb2.com/file/sway-me/home.svg)
 
 
 
