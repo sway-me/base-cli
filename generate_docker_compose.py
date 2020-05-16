@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function, unicode_literals
 
+import string
+from random import sample
 from typing import List, Dict, Any, Union
 
 import regex, requests, os
@@ -44,7 +46,7 @@ service_qs = [
             {'name': 'LazyLibrarian', 'checked': True},
             Separator('\n= Groupware 👪'),
             {'name': 'Matrix Synapse (6k⭐️): Federated Messaging and Voip', 'checked': True},
-            {'name': 'Collabora: Web based libre office', 'checked': True},
+            {'name': 'Collabora: Web based LibreOffice', 'checked': True},
             Separator('  Syncthing required.'),
             {'name': 'Radicale (1.8k ⭐️): CalDAV (calendar) and CardDAV (contact) server', 'checked': True},
             Separator('\n= Social Media 💬'),
@@ -124,7 +126,6 @@ service_r = prompt(service_qs, style=custom_style)
 api_ok = prompt(api_confirm, style=custom_style)
 
 services = [service.split()[0].lower().rstrip(':') for service in service_r['services']]
-services.insert(0, 'traefik')
 
 
 def create_a_records(user, key) -> None:
@@ -140,52 +141,165 @@ def create_a_records(user, key) -> None:
     # sys1.stdout = None
     # api = Api(user, key, user, ip.text, sandbox=False, attempts_count=3, attempts_delay=0.1)
     # api.domains_dns_addHost(os.environ['DOMAIN'], record)
+    print(f'✅ SUCCESS! {len(services)} A Records successfully created!')
     return None
 
 
-map = {
+options = {
     'syncthing': {
         'ports': ['22000:22000', '21027:21027/udp'],
         'port': 8384,
-        'volumes':[
-            '${HOME}/.config/syncthing/config:/config',
-
+        'volumes': [
+            '$HOME/.config/syncthing:/config',
+            '$HOME/Books:/Books',
+            '$HOME/Documents:/Documents/',
+            '$HOME/Downloads:/Downloads',
+            '$HOME/Feeds:/Feeds',
+            '$HOME/Images:/Images',
+            '$HOME/Office:/Office',
+            '$HOME/Public:/Public',
         ]
-    }
+    },
+    'sabnzbd': {
+        'port': 8080,
+        'volumes': [
+            '$HOME/.config/sabnzbd:/config',
+            '$HOME/Downloads:/downloads'
+        ]
+    },
+    'transmission': {
+        'port': 9091,
+        'environment': [
+            'TRANSMISSION_WEB_HOME=/combustion-release/',
+            'USER=$USER',
+            'PASS=$TRANSMISSION_PW',
+        ],
+        'volumes': [
+            '$HOME/.config/transmission:/config'
+            '$HOME/Downloads:/downloads'
+        ]
+    },
+    'jackett': {
+        'port': 9117,
+        'volumes': ['$HOME/.config/jackett:/config'],
+    },
+    'radarr': {
+        'port': 7878,
+        'volumes': [
+            '$HOME/.config/radarr:/config'
+            '$HOME/Downloads:/downloads',
+            '$HOME/Film:/movies'
+        ]
+    },
+    'sonarr': {
+        'port': 8989,
+        'volumes': [
+            '$HOME/.config/sonarr:/config'
+            '$HOME/Downloads:/downloads',
+            '$HOME/Series:/tv',
+        ]
+    },
+    'bazarr': {
+        'port': 6767,
+        'volumes': [
+            '$HOME/.config/bazarr:/config'
+            '$HOME/Series:/tv',
+            '$HOME/Film:/movies',
+        ]
+    },
+    'lidarr': {
+        'port': 8686,
+        'volumes': [
+            '$HOME/.config/lidarr:/config'
+            '$HOME/Downloads:/downloads',
+            '$HOME/Music:/music',
+        ]
+    },
+    'jellyfin': {
+        'port': 8096,
+        'volumes': [
+            '$HOME/.config/jellyfin:/config'
+            '$HOME/Film:/data/movies',
+            '$HOME/Series:/data/tvshows',
+            '$HOME/Music:/data/music',
+        ]
+    },
+    'funkwhale': {
+        'port': 80,
+        'image': 'funkwhale/all-in-one:latest',
+        'environment': [
+            'FUNKWHALE_PROTOCOL=https',
+            'FUNKWHALE_HOSTNAME=funkwhale.$DOMAIN',
+            'NESTED_PROXY=1',
+        ],
+        'volumes': [
+            '$HOME/.config/funkwhale:/data',
+            '$HOME/Music:/music',
+        ],
+    },
+    'lazylibrarian': {
+        'port': 5299,
+        'environment': ['DOCKER_MODS=linuxserver/calibre-web:calibre'],
+        'volumes': [
+            '$HOME/.config/lazylibrarian:/config',
+            '$HOME/Downloads:/downloads',
+            '$HOME/Downloads/books:/to-process',
+            '$HOME/Books:/books',
+        ]
+    },
+    'calibre-web': {
+        'port': 8083,
+        'environment': ['DOCKER_MODS=linuxserver/calibre-web:calibre'],
+        'volumes': [
+            '$HOME/.config/calibre-web:/config',
+            '$HOME/Books:/books',
+        ]
+    },
+    'booksonic': {
+        'port': 4040,
+        'volumes': [
+            '$HOME/.config/booksonic:/config',
+            '$HOME/Books:/audiobooks',
+        ]
+    },
 }
 
 
 def make_child(service: str, index: int):
+    # concat if env vars exist for service. see below
+    environment = ['PUID=1000', 'PGID=1000', 'TZ=${TZ}']
+    if 'environment' in options[service]:
+        environment = environment + options[service]['environment']
+
     template = {
-        service: {
-            'container_name': service,
-            'depends_on': ['traefik'],
-            'image': f'{service}:latest',
-            'restart': 'always',
-            'networks': {
-                'internal': {'ipv4_address': f'172.20.0.{index+3}'},
-                'web': 'null'
-            },
-            'ports': map[service]['ports'],
-            'labels': [
-                f"traefik.http.services.{service}.loadbalancer.server.port={map[service]['port']}",
-                f'traefik.http.routers.{service}.rule=Host(`{service}.$DOMAIN`)',
-                f'traefik.http.routers.{service}.entrypoints=https',
-                f'traefik.http.routers.{service}.tls.certresolver=http',
-                f'traefik.http.routers.{service}.service={service}',
-                f'traefik.http.routers.{service}.tls=true',
-                'traefik.docker.network=web',
-                'traefik.enable=true',
-            ],
-            'volumes': map[service]['volumes']
-
-
-        }
+        'container_name': service,
+        'depends_on': ['traefik'],
+        'restart': 'unless-stopped',
+        'image': options[service]['image'] if 'image' in options[service] else f'linuxserver/{service}:latest',
+        'networks': {
+            'internal': {'ipv4_address': f'172.20.0.{index + 3}'},
+            'web': None
+        },
+        'ports': options[service]['ports'] if 'ports' in options[service] else None,
+        'environment': environment,
+        'labels': [
+            'traefik.docker.network=web',
+            'traefik.enable=true',
+            f'traefik.http.routers.{service}.service={service}',
+            f"traefik.http.services.{service}.loadbalancer.server.port={options[service]['port']}",
+            f'traefik.http.routers.{service}.rule=Host(`{service}.$DOMAIN`)',
+            f'traefik.http.routers.{service}.entrypoints=http',
+            f'traefik.http.middlewares.{service}-https-redirect.redirectscheme.scheme=https',
+            f'traefik.http.routers.{service}.middlewares={service}-https-redirect',
+            f'traefik.http.routers.{service}-secure.rule=Host(`{service}.$DOMAIN`)',
+            f'traefik.http.routers.{service}-secure.entrypoints=https',
+            f'traefik.http.routers.{service}-secure.tls.certresolver=http',
+            f'traefik.http.routers.{service}-secure.tls=true',
+        ],
+        'volumes': options[service]['volumes'],
     }
     return template
 
-
-children = [make_child(service, i) for i, service in enumerate(services)]
 
 parent = {
     'version': '3',
@@ -198,15 +312,41 @@ parent = {
             }
         }
     },
-    'services': children
-
+    'services': {
+        'traefik': {
+            'image': 'traefik:latest',
+            'container_name': 'traefik',
+            'restart': 'unless-stopped',
+            'ports': ['80:80', '443:443'],
+            'networks': 'web',
+            'labels': [
+                'traefik.http.middlewares.traefik-auth.basicauth.users=$TRAEFIK_BASIC_AUTH',
+                'traefik.http.routers.traefik.middlewares=traefik-auth',
+                'traefik.http.routers.traefik.rule=Host(`traefik.$DOMAIN`)',
+                'traefik.http.services.traefik.loadbalancer.server.port=8080',
+                'traefik.http.routers.traefik.tls.certresolver=http',
+                'traefik.http.routers.traefik.entrypoints=https',
+                'traefik.http.routers.traefik.service=api@internal',
+                'traefik.http.routers.traefik.tls=true',
+                'traefik.enable=true',
+            ],
+            'volumes': [
+                '/etc/localtime:/etc/localtime',
+                '/var/run/docker.sock:/var/run/docker.sock',
+                '$HOME/.config/traefik/traefik.yml:/traefik.yml',
+                '$HOME/.config/traefik/acme.json:/acme.json'
+            ]
+        }
+    }
 }
+
+for i, service in enumerate(services):
+    parent['services'][service] = make_child(service, i)
 
 
 def create_docker_compose() -> None:
     with open(f"{os.environ['HOME']}/docker-compose.yml", 'w') as docker_compose:
         yaml.dump(parent, docker_compose, default_flow_style=False)
-    return None
 
 
 if api_ok['status']:
@@ -214,7 +354,6 @@ if api_ok['status']:
     if ip_ok['status']:
         namecheap_as = prompt(namecheap_qs)
         create_a_records(namecheap_as['user'], namecheap_as['key'])
-        print('✅  A Records successfully  created!')
         create_docker_compose()
     else:
         print('To whitelist an IP, visit https://sway-me.xyz/wiki#namecheap#whitelist_ip')
@@ -225,3 +364,11 @@ else:
     {nlh}{nlh.join(services)}{nl}  
     Please create an A Record for each service. This is required.
     If you are using namecheap, visit https://sway-me.xyz/wiki/namecheap#add_a_record.''')
+
+if 'transmission' in services:
+    transmission_pw = ''.join(sample(string.ascii_uppercase + string.ascii_lowercase + string.digits, 10))
+    with open(f"{os.environ['HOME']}/.config/.env", 'a') as out:
+        out.write(f'{nl}export TRANSMISSION_PW={transmission_pw}{nl}')
+    print(f'''✅ NOTE: Your *transmission* password is {transmission_pw}.
+            Use this to log into transmission.{os.environ['DOMAIN']} once its up. Its recommended you keep this. 
+            Then add it as a login item to the bitwarden service.''')

@@ -6,7 +6,7 @@ sudo -H pip3 install regex PyInquirer PyNamecheap pyyaml
 
 # config env
 # run base.sh && server.sh
-mkdir -p Backups Books Code Docs Downloads Feeds Film Music Office Public Series 
+mkdir -p Backups Books Code Docs Downloads/books Feeds Film Music Office Public Series
 
 
 # generate_env.py
