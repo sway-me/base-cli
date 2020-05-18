@@ -13,14 +13,14 @@ You will need
 
 
 ## tasks
-2 [ ] Collabora: multistage w/ wopiserver
-5 [ ] Mastodon: mutlistage all in one from repo
-4 [ ] Weechat: Mosh, screen, Plugins (discord, slack, matrix, irc, telegram, signal)
-6 [ ] Bitcore: multistage w/ Bitcoind 
-4 [ ] Ghost: replace 'ghost' with 'blog' as domain
-1 [ ] Selfoss: effortless
-7 [ ] Home-Assistant: test network_mode: host. [link(https://www.home-assistant.io/docs/installation/docker/)
-8 [ ] Leon: Build and test whole docker container 
+2 - [ ] Collabora: multistage w/ wopiserver
+5 - [ ] Mastodon: mutlistage all in one from repo
+4 - [ ] Weechat: Mosh, screen, Plugins (discord, slack, matrix, irc, telegram, signal)
+6 - [ ] Bitcore: multistage w/ Bitcoind 
+4 - [ ] Ghost: replace 'ghost' with 'blog' as domain
+1 - [ ] Selfoss: effortless
+7 - [ ] Home-Assistant: test network_mode: host. [link(https://www.home-assistant.io/docs/installation/docker/)
+8 - [ ] Leon: Build and test whole docker container 
 
 ## someday
 - [ ] add h5ai to webdav image
