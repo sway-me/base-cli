@@ -15,7 +15,7 @@ service_qs = [
     {
         'type': 'checkbox',
         'message': 'Choose Services:',
-        'qmark': ' ⚙️  ',
+        'qmark': ' ⚙️',
         'name': 'services',
         'choices': [
             Separator('\n= Utilities 🛠'),
