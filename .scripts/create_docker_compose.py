@@ -261,7 +261,7 @@ Use these to log into {service}.{os.environ['DOMAIN']} once its up. Its recommen
 and add it as a login item to the bitwarden service.''')
     return pw
 
-
+# TODO create subset list of services that require password and envar and just itrate through that list
 handle_password('traefik')
 with open(f"{os.environ['HOME']}/.config/.env", 'a') as out:
     out.write('export TRAEFIK_BASIC_AUTH=$(htpasswd -nb $USER $TRAEFIK_PW)\n')
