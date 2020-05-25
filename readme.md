@@ -24,6 +24,7 @@ You will need
 
 ## someday
 - [ ] add h5ai to webdav image
+- [ ] add joplin web
 ## Architecture
 ![](https://f000.backblazeb2.com/file/sway-me/home.svg)
 
