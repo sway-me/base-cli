@@ -24,6 +24,10 @@ check(){
   cat .services.json | jq 'contains(["'$1'"])'
 }
 
+if [[  $(check 'funkwhale') = true  ]]; then
+  docker exec -it funkwhale manage createsuperuser
+fi
+
 ## radicale
 if [[  $(check 'radicale') = true ]]; then
   stow --target=$HOME radicale
