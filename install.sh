@@ -1,11 +1,11 @@
 #!/bin/bash
 set -e
 
-sh -c "$(https://sway-me.xyz/base.sh)"
-sh -c "$(https://sway-me.xyz/server.sh)"
+#sh -c "$(https://sway-me.xyz/base.sh)"
+#sh -c "$(https://sway-me.xyz/server.sh)"
 
-sudo apt install python3-pip
-sudo -H pip3 install PyInquirer PyNamecheap ruamel.yaml requests tqdm
+#sudo apt install python3-pip
+#sudo -H pip3 install PyInquirer PyNamecheap ruamel.yaml requests tqdm
 
 python3 .scripts/get_envars.py
 source $HOME/.config/.env
